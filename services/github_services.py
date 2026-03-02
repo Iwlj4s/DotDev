@@ -1,0 +1,142 @@
+import time
+from fastapi import HTTPException, requests, status, Response
+from sqlalchemy.ext.asyncio import AsyncSession
+from fastapi.responses import RedirectResponse
+
+from DAO.user_dao import UserDAO
+from config import settings
+
+import base64
+import subprocess
+import json
+import time
+import asyncio
+import base64
+import httpx
+
+from helpers.jwt_helper import create_access_token
+from services.user_services import UserService
+
+class GithubAuth:
+    def __init__(self, client_id: str, client_secret: str, redirect_uri: str):
+        self.client_id = client_id
+        self.client_secret = client_secret
+        self.redirect_uri = redirect_uri
+
+    async def get_github_user_data(self, code: str) -> dict:
+        """Exchange OAuth code for GitHub user profile data."""
+        async with httpx.AsyncClient() as client:
+            try:
+                print("Github Token Request")
+                token_response = await client.post(
+                    settings.GITHUB_TOKEN_URL,
+                    data={
+                        "client_id": self.client_id,
+                        "client_secret": self.client_secret,
+                        "code": code,
+                        "redirect_uri": self.redirect_uri,
+                    },
+                    headers={"Accept": "application/json"},
+                )
+
+                print(f"Token response status: {token_response.status_code}")
+                print(f"Token response text: {token_response.text}")
+
+                # parse JSON; if GitHub still returns a urlencoded string we'll
+                # catch the JSON error and decode manually as a fallback.
+                token_data = token_response.json()
+                print(f"Token data: {token_data}")
+
+                access_token = token_data.get("access_token")
+                error_description = token_data.get("error_description")
+
+                if error_description:
+                    print(f"GitHub error: {error_description}")
+                    raise HTTPException(
+                        status_code=status.HTTP_400_BAD_REQUEST,
+                        detail=f"GitHub error: {error_description}",
+                    )
+
+                if not access_token:
+                    print("No access token received from GitHub")
+                    raise HTTPException(
+                        status_code=status.HTTP_400_BAD_REQUEST,
+                        detail="Can't get GitHub token - no access_token in response",
+                    )
+
+                print(f"Access token received: {access_token[:10]}...")
+
+            except Exception as e:
+                print(f"Error getting token: {e}")
+                print(f"Error type: {type(e)}")
+                raise HTTPException(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail=f"Can't get GitHub token: {str(e)}",
+                )
+
+            # Take user data
+            user_response = await client.get(
+                settings.GITHUB_USER_URL,
+                headers={"Authorization": f"token {access_token}"},
+            )
+
+            if user_response.status_code != 200:
+                print(f"Failed to get user data: {user_response.status_code}")
+                raise HTTPException(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail="Can't get user data",
+                )
+
+            user_data = user_response.json()
+            json_user_data = json.dumps(user_data, indent=4)
+            print(f"User data received: {json_user_data}")
+
+            return user_data
+
+    async def get_github_auth_flow(
+        self, code: str, response: Response | None, db: AsyncSession
+    ) -> dict:
+        """
+        Complete authentication process using GitHub OAuth code.
+
+        - Fetch GitHub profile data
+        - Create or update local user record
+        - Generate JWT token
+        - Optionally set HttpOnly cookie on provided `response`
+        - Return dictionary suitable for JSON response (includes user info and token)
+        """
+        print("=== GITHUB AUTH FLOW STARTED ===")
+        print(f"Code: {code[:10]}...")
+
+        github_user = await self.get_github_user_data(code)
+        print(
+            f"GitHub user received: {github_user.get('login')} (ID: {github_user.get('id')})"
+        )
+
+        # lookup or create local user
+        user = await UserDAO.get_user_by_github_id(db=db, github_id=github_user["id"])
+        if not user:
+            print("User not found, creating new user...")
+            user = await UserDAO.create_user_with_github(db=db, github_id=github_user["id"], user_data=github_user)
+        else:
+            print(f"Existing user: {user.name} (ID: {user.id})")
+
+        print("Generating JWT token for user")
+        access_token = create_access_token({"sub": str(user.id)})
+        print(f"JWT token created: {access_token[:20]}...")
+
+        # set cookie if response object provided
+        if response is not None:
+            response.set_cookie(
+                key="user_access_token",
+                value=access_token,
+                httponly=True,
+                secure=False,  # enable True in production
+                samesite="lax",
+            )
+
+        # build response payload using UserService
+        user_payload = await UserService.create_current_user_response(user=user, token=access_token)
+        return {"status": "ok", 
+                "user": user_payload.dict()}
+
