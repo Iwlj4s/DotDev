@@ -6,12 +6,8 @@ from fastapi.responses import RedirectResponse
 from DAO.user_dao import UserDAO
 from config import settings
 
-import base64
-import subprocess
 import json
 import time
-import asyncio
-import base64
 import httpx
 
 from helpers.jwt_helper import create_access_token
@@ -23,8 +19,14 @@ class GithubAuth:
         self.client_secret = client_secret
         self.redirect_uri = redirect_uri
 
-    async def get_github_user_data(self, code: str) -> dict:
-        """Exchange OAuth code for GitHub user profile data."""
+    async def get_github_token_response(self, code: str) -> dict:
+        """
+            Exchange OAuth code for GitHub user profile data.
+                - **code**: OAuth code received from GitHub after user authorization
+                
+                Returns a dictionary containing the access token and any error description.
+                Raises HTTPException if the token exchange fails or if GitHub returns an error.        
+        """
         async with httpx.AsyncClient() as client:
             try:
                 print("Github Token Request")
@@ -42,8 +44,6 @@ class GithubAuth:
                 print(f"Token response status: {token_response.status_code}")
                 print(f"Token response text: {token_response.text}")
 
-                # parse JSON; if GitHub still returns a urlencoded string we'll
-                # catch the JSON error and decode manually as a fallback.
                 token_data = token_response.json()
                 print(f"Token data: {token_data}")
 
@@ -66,6 +66,14 @@ class GithubAuth:
 
                 print(f"Access token received: {access_token[:10]}...")
 
+                token_response_data = {
+                    "access_token": access_token,
+                    "error_description": error_description,
+                    "raw_response": token_response.text
+                }
+                
+                return token_response_data
+
             except Exception as e:
                 print(f"Error getting token: {e}")
                 print(f"Error type: {type(e)}")
@@ -74,7 +82,13 @@ class GithubAuth:
                     detail=f"Can't get GitHub token: {str(e)}",
                 )
 
-            # Take user data
+
+    async def get_github_user_data(self, code: str) -> dict:
+        """Fetch GitHub user profile data using OAuth code."""
+        token_data = await self.get_github_token_response(code)
+        access_token = token_data.get("access_token")
+
+        async with httpx.AsyncClient() as client:
             user_response = await client.get(
                 settings.GITHUB_USER_URL,
                 headers={"Authorization": f"token {access_token}"},
@@ -93,9 +107,10 @@ class GithubAuth:
 
             return user_data
 
-    async def get_github_auth_flow(
-        self, code: str, response: Response | None, db: AsyncSession
-    ) -> dict:
+    async def get_github_auth_flow(self,
+                                   code: str,
+                                   response: Response | None,
+                                   db: AsyncSession) -> dict:
         """
         Complete authentication process using GitHub OAuth code.
 
