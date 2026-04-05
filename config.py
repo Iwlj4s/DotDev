@@ -44,6 +44,11 @@ class Settings:
 
     GITHUB_PROJECT_TOKEN: str = os.getenv('GITHUB_PROJECT_TOKEN')
 
+    GITHUB_AUTH_URL = (
+        f"{GITHUB_AUTH_URL}client_id={GITHUB_CLIENT_ID}"
+        f"&redirect_uri={REDIRECT_URI}"
+    )
+
     # JWT authentication settings
 
     SECRET_KEY: str = os.getenv('SECRET_KEY')   # Secret key for JWT token signing

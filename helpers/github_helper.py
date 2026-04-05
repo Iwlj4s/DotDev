@@ -8,9 +8,9 @@ from services.github_services import GithubAuth
 from config import settings
 
 
-async def github_take_access_token(
-    db: AsyncSession, response: Response, github_code: str
-):
+async def github_take_access_token(db: AsyncSession, 
+                                   response: Response, 
+                                   github_code: str):
     """Thin wrapper that returns GitHub profile dict for a given code.
 
     Kept for backwards compatibility with the existing `/login` route.
@@ -22,10 +22,11 @@ async def github_take_access_token(
     ).get_github_user_data(code=github_code)
 
 
-async def github_auth_flow(
-    db: AsyncSession, response: Response | None, code: str
-) -> dict:
-    """Full backend flow for GitHub authentication.
+async def github_auth_flow(db: AsyncSession, 
+                           response: Response | None, 
+                           code: str) -> dict:
+    """
+    Full backend flow for GitHub authentication.
 
     This performs the same operations as the service `get_github_auth_flow`
     and returns its result. It is designed to be called by routers so that

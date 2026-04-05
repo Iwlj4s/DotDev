@@ -47,3 +47,9 @@ class Project(BaseModel):
     repo_created_at: Optional[str] = Field(default=None, title="Repository creation timestamp")
     repo_updated_at: Optional[str] = Field(default=None, title="Repository update timestamp")
     github_data: Optional[str] = Field(default=None, title="Raw GitHub data payload")
+
+class CreateProject(BaseModel):
+    """Schema for project creation request"""
+    repo_name: Union[str, None] = Field(
+        default=None, min_length=1, title="Repository name (unique)"
+    )

@@ -19,21 +19,16 @@ async def auth_github():
     print("=== GITHUB AUTH INITIATED ===")
     print(f"Redirect URI: {settings.REDIRECT_URI}")
 
-    github_auth_url = (
-        f"{settings.GITHUB_AUTH_URL}client_id={settings.GITHUB_CLIENT_ID}"
-        f"&redirect_uri={settings.REDIRECT_URI}"
-    )
+    github_auth_url = settings.GITHUB_AUTH_URL
     print(f"Redirecting to GitHub: {github_auth_url}")
     return RedirectResponse(github_auth_url)
 
 
 @github_auth_router.get("/github/callback")
-async def github_callback(
-    code: str | None = None,
-    error: str | None = None,
-    response: Response = None,
-    db: AsyncSession = Depends(get_db),
-):
+async def github_callback(code: str | None = None,
+                          error: str | None = None,
+                          response: Response = None,
+                          db: AsyncSession = Depends(get_db)):
     """Handle the OAuth callback and return JSON data (and set cookie)."""
     print("=== GITHUB CALLBACK STARTED ===")
     print(f"Code: {code}")
