@@ -21,6 +21,8 @@ class User(BaseModel):
     """Schema for user registration and validation"""
     name: Union[str, None] = Field(default=None, min_length=3, title="User name")
     email: Union[str, None] = Field(default=None, title="User's email")
+    github_id: Union[int, None] = Field(default=None, title="User's github id")
+    github_login: Union[str, None] = Field(default=None, title="User's github login")
     password: Union[str, None] = Field(default=None, min_length=4, title="User's password")
     bio: Optional[str] = Field(default=None, min_length=10, title="User's biography")
 

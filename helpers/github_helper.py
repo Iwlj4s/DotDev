@@ -4,10 +4,11 @@ from starlette.responses import Response
 from sqlalchemy.ext.asyncio import AsyncSession
 from starlette import status
 
+from database import response_schemas
 from services.github_services import GithubAuth
 from config import settings
 
-
+# Add here response schemas
 async def github_take_access_token(db: AsyncSession, 
                                    response: Response, 
                                    github_code: str):
@@ -24,7 +25,7 @@ async def github_take_access_token(db: AsyncSession,
 
 async def github_auth_flow(db: AsyncSession, 
                            response: Response | None, 
-                           code: str) -> dict:
+                           code: str) -> response_schemas.CurrentUserResponse:
     """
     Full backend flow for GitHub authentication.
 

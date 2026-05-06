@@ -1,6 +1,6 @@
 from typing import List
 from datetime import datetime
-from sqlalchemy import String, ForeignKey, Column, Integer, Boolean, DateTime, Text
+from sqlalchemy import String, ForeignKey, Column, Integer, Boolean, DateTime, Text, JSON
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from sqlalchemy.sql import func
 
@@ -79,11 +79,11 @@ class Project(Base):
 
     full_readme: Mapped[str] = mapped_column(Text, unique=False)          
 
-    repo_created_at: Mapped[DateTime] = mapped_column(DateTime) 
-    repo_updated_at: Mapped[DateTime] = mapped_column(DateTime) 
+    repo_created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True))
+    repo_updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True))
 
     # "Cached" Github data 
-    github_data: Mapped[str] = mapped_column(Text)
+    github_data: Mapped[dict] = mapped_column(JSON)
     user_id: Mapped[int] = mapped_column(ForeignKey('users.id'))    # Foreign key to user
 
     # Many-to-one relationship with User model

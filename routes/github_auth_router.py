@@ -3,6 +3,7 @@ from fastapi.responses import RedirectResponse
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from database import response_schemas
 from helpers.github_helper import github_auth_flow
 
 from database.database import get_db
@@ -28,7 +29,7 @@ async def auth_github():
 async def github_callback(code: str | None = None,
                           error: str | None = None,
                           response: Response = None,
-                          db: AsyncSession = Depends(get_db)):
+                          db: AsyncSession = Depends(get_db)) -> response_schemas.CurrentUserResponse:
     """Handle the OAuth callback and return JSON data (and set cookie)."""
     print("=== GITHUB CALLBACK STARTED ===")
     print(f"Code: {code}")
@@ -55,4 +56,5 @@ async def github_login(
     db: AsyncSession = Depends(get_db),
 ):
     """Obtain token by providing GitHub code directly (non-browser clients)."""
-    return await github_auth_flow(db=db, response=response, code=github_code)
+    result = await github_auth_flow(db=db, response=response, code=github_code)
+    return {"status": "ok", "user": result.dict()}

@@ -8,21 +8,30 @@ from database import schema, models, response_schemas
 from helpers import exception_helper
 from DAO.general_dao import GeneralDAO
 from DAO.project_dao import ProjectDAO
+from services.github_services import GithubRepository
 from database.database import get_db
 
 from services.project_services import ProjectService
 
 
-async def create_project(
-    request: schema.Project, current_user: schema.User, db: AsyncSession = Depends(get_db)
-) -> response_schemas.ProjectCreateResponse:
+async def create_project(request: schema.CreateProject, 
+                         current_user: schema.User, 
+                         db: AsyncSession = Depends(get_db)) -> response_schemas.ProjectCreateResponse:
     """Business logic for creating a new project."""
+    # github_data = await github_helper.get_github_repository(repo_owner=current_user.login)
     existing = await ProjectDAO.get_project_by_repo_name(db=db, repo_name=request.repo_name)
     await exception_helper.CheckHTTP409Conflict(
         founding_item=existing, text="Project with this repo_name already exists"
     )
-    new_project = await ProjectDAO.create_project(db=db, request=request, user_id=current_user.id)
-    await db.refresh(new_project)
+    
+    project_data = await GithubRepository.get_github_repository(repo_owner=current_user.github_login, repo_name=request.repo_name)
+
+    new_project = await ProjectDAO.create_github_repo_project(db=db, 
+                                                              user_id=current_user.id,
+                                                              repo_name=request.repo_name, 
+                                                              owner_name=current_user.github_login, 
+                                                              github_data=project_data)
+    
     return response_schemas.ProjectCreateResponse(
         message="Project has been created successfully",
         status_code=200,

@@ -1,3 +1,5 @@
+from datetime import datetime
+
 from sqlalchemy import select, update, delete, and_
 from sqlalchemy.ext.asyncio import AsyncSession
 from typing import List, Optional
@@ -28,6 +30,31 @@ class ProjectDAO:
         )
         db.add(new_project)
 
+        await db.commit()
+        await db.refresh(new_project)
+
+        return new_project
+    
+    @classmethod
+    async def create_github_repo_project(
+        cls,
+        db: AsyncSession,
+        user_id: int,
+        repo_name: str,
+        owner_name: str,
+        github_data: dict) -> models.Project:
+
+        new_project = models.Project(
+            user_id=user_id,
+            repo_name=repo_name,
+            owner_name=owner_name,
+            description=github_data.get("description"),
+            full_readme=github_data.get("readme"),
+            repo_created_at=datetime.fromisoformat(github_data.get("created_at", "").replace('Z', '+00:00')),
+            repo_updated_at=datetime.fromisoformat(github_data.get("updated_at", "").replace('Z', '+00:00')),
+            github_data=github_data,
+        )
+        db.add(new_project)
         await db.commit()
         await db.refresh(new_project)
 
