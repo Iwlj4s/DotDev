@@ -29,7 +29,8 @@ engine = create_async_engine(
 # Create async session factory
 SessionLocal = async_sessionmaker(autocommit=False,  # Autocommit disabled for explicit transaction management
                                   autoflush=False,  # Autoflush disabled
-                                  bind=engine)  # Bind to created engine
+                                  bind=engine,
+                                  expire_on_commit=False)  # Bind to created engine
 
 # Base class for all SQLAlchemy models
 Base = declarative_base()

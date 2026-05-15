@@ -8,10 +8,12 @@ from database.database import get_db
 from database import schema, models, response_schemas
 from helpers import exception_helper
 
+from helpers.token_helper import get_token
 from repository.user_repository import get_current_user
 from repository import user_repository
 
 from DAO.general_dao import GeneralDAO
+from services.user_services import UserService
 
 """
 User API routes.
@@ -96,15 +98,20 @@ async def get_user(user_id: int,
     )
 
 @user_router.get("/me/", status_code=200)
-async def get_me(user_data: schema.User = Depends(get_current_user)) -> response_schemas.CurrentUserResponse:
+async def get_me(user_data: schema.User = Depends(get_current_user), 
+                 token: str = Depends(get_token)) -> response_schemas.UserLoginResponse:
     """
     Get current authenticated user's profile.
     Requires valid JWT token.
     
     Returns current user's data (Current user with items).
     """
+    user_response = await UserService.create_current_user_response(user=user_data, token=token)
 
-    return user_data
+    return response_schemas.UserLoginResponse(
+        message="Current user retrieved successfully",
+        status_code=200,       
+        data=user_response)
 
 @user_router.patch("/me/update", status_code=200)
 async def update_me(user_data: schema.UserUpdate, 

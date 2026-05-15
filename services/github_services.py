@@ -85,7 +85,26 @@ class GithubAuth:
                     detail=f"Can't get GitHub token: {str(e)}",
                 )
 
+    async def fetch_github_user_data(self, access_token: str) -> dict:
+        async with httpx.AsyncClient() as client:
+            user_response = await client.get(
+                settings.GITHUB_USER_URL,
+                headers={"Authorization": f"token {access_token}"},
+            )
 
+            if user_response.status_code != 200:
+                print(f"Failed to get user data: {user_response.status_code}")
+                raise HTTPException(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail="Can't get user data",
+                )
+
+            user_data = user_response.json()
+            json_user_data = json.dumps(user_data, indent=4)
+            print(f"User data received: {json_user_data}")
+
+            return user_data
+        
     async def get_github_user_data(self, code: str) -> dict:
         """Fetch GitHub user profile data using OAuth code."""
         token_data = await self.get_github_token_response(code)
@@ -126,35 +145,44 @@ class GithubAuth:
         print("=== GITHUB AUTH FLOW STARTED ===")
         print(f"Code: {code[:10]}...")
 
-        github_user = await self.get_github_user_data(code)
-        print(
-            f"GitHub user received: {github_user.get('login')} (ID: {github_user.get('id')})"
-        )
+        # Get token by using code
+        token_data = await self.get_github_token_response(code)
+        github_access_token = token_data.get("access_token")
+        print(f"Github Access token obtained: {github_access_token[:10]}...") 
+
+        # Fetch GitHub user data using access token
+        github_user = await self.fetch_github_user_data(github_access_token)
+        print(f"GitHub user data: {github_user.get('login')} (ID: {github_user.get('id')})")
 
         # lookup or create local user
         user = await UserDAO.get_user_by_github_id(db=db, github_id=github_user["id"])
         if not user:
             print("User not found, creating new user...")
-            user = await UserDAO.create_user_with_github(db=db, github_id=github_user["id"], user_data=github_user)
+            user = await UserDAO.create_user_with_github(db=db, 
+                                                         github_id=github_user["id"], 
+                                                         user_data=github_user,
+                                                         github_access_token=github_access_token)
         else:
             print(f"Existing user: {user.name} (ID: {user.id})")
+            user.github_access_token = github_access_token
+            await db.commit()
 
         print("Generating JWT token for user")
-        access_token = create_access_token({"sub": str(user.id)})
-        print(f"JWT token created: {access_token[:20]}...")
+        jwt_token = create_access_token({"sub": str(user.id)})
+        print(f"JWT token created: {jwt_token[:20]}...")
 
         # set cookie if response object provided
         if response is not None:
             response.set_cookie(
                 key="user_access_token",
-                value=access_token,
+                value=jwt_token,
                 httponly=True,
                 secure=False,  # enable True in production
                 samesite="lax",
             )
 
         # build response payload using UserService
-        user_payload = await UserService.create_current_user_response(user=user, token=access_token)
+        user_payload = await UserService.create_current_user_response(user=user, token=jwt_token)
         return user_payload
 
 class GithubRepository:
@@ -172,7 +200,7 @@ class GithubRepository:
             return "Error decoding README content"
     
     @classmethod
-    async def get_github_repository(cls, repo_owner: str, repo_name: str):
+    async def get_github_repository(cls, repo_owner: str, repo_name: str, access_token: str):
         async with httpx.AsyncClient() as client:
             print(f"Fetching repo: {repo_name} {repo_owner}")
 
@@ -180,7 +208,7 @@ class GithubRepository:
                 f"https://api.github.com/repos/{repo_owner}/{repo_name}",
                 headers={
                     "Accept": "application/json",
-                    "Authorization": f"token {settings.GITHUB_PROJECT_TOKEN}"
+                    "Authorization": f"token {access_token}"
                     }
             )
             print(f"Repo response status: {repo_response.status_code}")
@@ -205,7 +233,7 @@ class GithubRepository:
                 f"https://api.github.com/repos/{repo_owner}/{repo_name}/readme",
                 headers={
                     "Accept": "application/json",
-                    "Authorization": f"token {settings.GITHUB_PROJECT_TOKEN}"
+                    "Authorization": f"token {access_token}"
                 }
             )
             

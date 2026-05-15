@@ -110,7 +110,7 @@ async def login(request: schema.UserSignIn,
     )
 
 async def get_current_user(db: AsyncSession = Depends(get_db),
-                           token: str = Depends(get_token)) -> response_schemas.CurrentUserResponse:
+                           token: str = Depends(get_token)) -> models.User:
     """
     Get current authenticated user from JWT token.
     Used as dependency in protected routes.
@@ -133,7 +133,7 @@ async def get_current_user(db: AsyncSession = Depends(get_db),
     await CheckHTTP401Unauthorized(founding_item=user, text="User is unauthorized")
 
     # Create response data including access token for current user
-    return await UserService.create_current_user_response(user=user, token=token)
+    return user
 
 
 async def update_me(user_id: int,
@@ -242,10 +242,10 @@ async def get_all_users(db: AsyncSession) -> response_schemas.UserListResponse:
     users = await GeneralDAO.get_all_records(db=db, model=models.User)
     await exception_helper.CheckHTTP404NotFound(founding_item=users, text="Users not found")
 
-    users = await UserDAO.get_all_users(db=db)
+    users_list = await UserDAO.get_all_users(db=db)
     
     return response_schemas.UserListResponse(
         message="Users retrieved successfully",
         status_code=200,
-        data=users
+        data=users_list
     )
