@@ -3,6 +3,7 @@ from fastapi.responses import RedirectResponse
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from database import response_schemas
 from helpers.github_helper import github_auth_flow
 
 from database.database import get_db
@@ -19,21 +20,16 @@ async def auth_github():
     print("=== GITHUB AUTH INITIATED ===")
     print(f"Redirect URI: {settings.REDIRECT_URI}")
 
-    github_auth_url = (
-        f"{settings.GITHUB_AUTH_URL}client_id={settings.GITHUB_CLIENT_ID}"
-        f"&redirect_uri={settings.REDIRECT_URI}"
-    )
+    github_auth_url = settings.GITHUB_AUTH_URL
     print(f"Redirecting to GitHub: {github_auth_url}")
     return RedirectResponse(github_auth_url)
 
 
 @github_auth_router.get("/github/callback")
-async def github_callback(
-    code: str | None = None,
-    error: str | None = None,
-    response: Response = None,
-    db: AsyncSession = Depends(get_db),
-):
+async def github_callback(code: str | None = None,
+                          error: str | None = None,
+                          response: Response = None,
+                          db: AsyncSession = Depends(get_db)) -> response_schemas.CurrentUserResponse:
     """Handle the OAuth callback and return JSON data (and set cookie)."""
     print("=== GITHUB CALLBACK STARTED ===")
     print(f"Code: {code}")
@@ -60,4 +56,5 @@ async def github_login(
     db: AsyncSession = Depends(get_db),
 ):
     """Obtain token by providing GitHub code directly (non-browser clients)."""
-    return await github_auth_flow(db=db, response=response, code=github_code)
+    result = await github_auth_flow(db=db, response=response, code=github_code)
+    return {"status": "ok", "user": result.dict()}

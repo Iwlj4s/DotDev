@@ -17,11 +17,14 @@ project_router = APIRouter(prefix="/projects", tags=["project_router"])
 
 @project_router.post("/create", status_code=200)
 async def create_new_project(
-    request: schema.Project,
+    request: schema.CreateProject,
     request_context: RequestContext = Depends(get_request_context),
 ) -> response_schemas.ProjectCreateResponse:
-    return await create_project(request=request, current_user=request_context.current_user, db=request_context.db)
-
+    return await create_project(
+        request=request,                
+        current_user=request_context.current_user,
+        db=request_context.db,
+    )   
 
 @project_router.patch("/update/{project_id}", status_code=200)
 async def update_project():

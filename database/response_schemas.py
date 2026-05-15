@@ -1,5 +1,5 @@
 from pydantic import BaseModel
-from typing import List, Optional, Generic, TypeVar
+from typing import Any, Dict, List, Optional, Generic, TypeVar
 
 # Type variable for generic types - represents any data type
 T = TypeVar('T')
@@ -157,7 +157,7 @@ class ProjectResponse(BaseModel):
     full_readme: Optional[str]
     repo_created_at: Optional[str]
     repo_updated_at: Optional[str]
-    github_data: Optional[str]
+    github_data: Optional[Dict[str, Any]]
     user_id: int
 
     class Config:
