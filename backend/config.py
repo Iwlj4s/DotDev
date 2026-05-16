@@ -42,6 +42,9 @@ class Settings:
 
     REDIRECT_URI: str = os.getenv("REDIRECT_URI")
 
+    # Frontend URL where users should be redirected after OAuth
+    FRONTEND_URL: str = os.getenv('FRONTEND_URL', 'http://localhost:5173')
+
     GITHUB_PROJECT_TOKEN: str = os.getenv('GITHUB_PROJECT_TOKEN')
 
     GITHUB_AUTH_URL = (

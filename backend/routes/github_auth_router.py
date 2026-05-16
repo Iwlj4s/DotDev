@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Response, Depends, HTTPException
+from fastapi import APIRouter, Response, Depends, HTTPException, Body
 from fastapi.responses import RedirectResponse
 
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -44,17 +44,26 @@ async def github_callback(code: str | None = None,
         raise HTTPException(status_code=400, detail="no_code")
 
     print("Calling github_auth_flow...")
-    result = await github_auth_flow(db=db, response=response, code=code)
-    print("=== GITHUB CALLBACK COMPLETED SUCCESSFULLY ===")
-    return result
+    
+    # Create a redirect response to the frontend and pass it to the auth flow
+    redirect_to = settings.FRONTEND_URL or "/"
+    redirect_response = RedirectResponse(url=redirect_to)
+
+    # github_auth_flow will set HttpOnly cookie on the provided response object
+    await github_auth_flow(db=db, response=redirect_response, code=code)
+    print("=== GITHUB CALLBACK COMPLETED SUCCESSFULLY - REDIRECTING TO FRONTEND ===")
+    return redirect_response
 
 
 @github_auth_router.post("/login")
 async def github_login(
-    github_code: str,
-    response: Response,
+    github_code: str = Body(..., embed=True),
+    response: Response = None,
     db: AsyncSession = Depends(get_db),
 ):
-    """Obtain token by providing GitHub code directly (non-browser clients)."""
+    """Obtain token by providing GitHub code directly (non-browser clients).
+
+    Accepts JSON body: { "github_code": "..." }
+    """
     result = await github_auth_flow(db=db, response=response, code=github_code)
     return {"status": "ok", "user": result.dict()}
