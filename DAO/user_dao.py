@@ -118,7 +118,8 @@ class UserDAO:
     async def create_user_with_github(cls,
                                       db: AsyncSession,
                                       github_id: int,
-                                      user_data: dict = None) -> models.User:
+                                      access_token: str,
+                                      user_data: dict = None,) -> models.User:
         json_pretty_user_data = json.dumps(user_data, indent=4)
 
         print(f"User data: {json_pretty_user_data}")
@@ -127,8 +128,8 @@ class UserDAO:
                                name=user_data["name"] or user_data["login"],
                                email=user_data["email"] if user_data["email"] else "user have not email",
                                bio=user_data["bio"],
-                               location=user_data["location"])
-        db.add(new_user)
+                               location=user_data["location"],
+                               github_access_token=access_token)
 
         await db.commit()
 

@@ -15,7 +15,7 @@ from services.project_services import ProjectService
 
 
 async def create_project(request: schema.CreateProject, 
-                         current_user: schema.User, 
+                         current_user: models.User, 
                          db: AsyncSession = Depends(get_db)) -> response_schemas.ProjectCreateResponse:
     """Business logic for creating a new project."""
     # github_data = await github_helper.get_github_repository(repo_owner=current_user.login)
@@ -24,7 +24,9 @@ async def create_project(request: schema.CreateProject,
         founding_item=existing, text="Project with this repo_name already exists"
     )
     
-    project_data = await GithubRepository.get_github_repository(repo_owner=current_user.github_login, repo_name=request.repo_name)
+    project_data = await GithubRepository.get_github_repository(repo_owner=current_user.github_login, 
+                                                                repo_name=request.repo_name, 
+                                                                access_token=current_user.github_access_token)
 
     new_project = await ProjectDAO.create_github_repo_project(db=db, 
                                                               user_id=current_user.id,

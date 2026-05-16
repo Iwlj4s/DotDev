@@ -1,9 +1,3 @@
-import httpx
-
-async def test():
-    async with httpx.AsyncClient() as client:
-        r = await client.get("https://api.github.com/user")
-        print(r.status_code)
-
-import asyncio
-asyncio.run(test())
+import requests
+response = requests.get("https://api.github.com/user", timeout=10)
+print(response.status_code)

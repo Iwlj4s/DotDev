@@ -29,6 +29,9 @@ class UserService:
                 name=user.name,
                 email=user.email,
                 bio=user.bio,
+                github_id=user.github_id,
+                github_login=user.github_login,
+                location=user.location,
             )
             users_list.append(user_data)
 

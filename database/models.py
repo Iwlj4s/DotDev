@@ -30,6 +30,8 @@ class User(Base):
     created_at: Mapped[datetime] = mapped_column(DateTime,
                                                  nullable=False,
                                                  server_default=func.now())
+    
+    github_access_token: Mapped[str] = mapped_column(String, nullable=True) # Github access token for API calls
 
     project: Mapped[List["Project"]] = relationship(
         "Project",

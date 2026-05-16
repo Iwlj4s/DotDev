@@ -41,7 +41,7 @@ class RequestContext:
         - request_id: str
     """
     db: AsyncSession
-    current_user: any
+    current_user: models.User
 
 async def get_request_context(db: AsyncSession = Depends(get_db),
                               current_user: any = Depends(get_current_user)) -> RequestContext:
