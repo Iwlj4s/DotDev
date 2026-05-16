@@ -130,10 +130,10 @@ class UserDAO:
                                bio=user_data["bio"],
                                location=user_data["location"],
                                github_access_token=access_token)
-
+        db.add(new_user)
         await db.commit()
-
         await db.refresh(new_user)
+        
         print(f"User created with ID: {new_user.id} GitHub ID: {new_user.github_id}")
 
         return new_user

@@ -5,7 +5,8 @@ from typing import Dict, Any, List
 
 from starlette.responses import Response
 
-from database import schema, models, response_schemas
+from database import models, response_schemas
+from database import schema
 
 from helpers import exception_helper
 from DAO.general_dao import GeneralDAO

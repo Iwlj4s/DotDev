@@ -5,7 +5,8 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from typing import List, Optional
 
 from DAO.general_dao import GeneralDAO
-from database import models, response_schemas, schema
+from database import models, response_schemas
+from database import schema
 from helpers import exception_helper
 from services.project_services import ProjectService
 

@@ -3,8 +3,9 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from typing import Dict, Any, List
 
 
+from database import response_schemas
 from context.request_context import RequestContext, get_request_context
-from database import response_schemas, schema
+from database import schema
 from database.database import get_db
 
 from repository import item_repository

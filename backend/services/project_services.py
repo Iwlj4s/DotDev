@@ -1,6 +1,7 @@
 from typing import List
 from sqlalchemy.ext.asyncio import AsyncSession
-from database import models, response_schemas
+from database import models
+from database import response_schemas
 
 
 class ProjectService:

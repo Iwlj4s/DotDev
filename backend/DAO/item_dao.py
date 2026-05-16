@@ -3,8 +3,8 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from typing import List, Optional
 
 from DAO.general_dao import GeneralDAO
-from database import response_schemas, schema
-from database import models
+from database import schema
+from database import models, response_schemas
 from helpers import exception_helper
 from services.item_services import ItemService
 

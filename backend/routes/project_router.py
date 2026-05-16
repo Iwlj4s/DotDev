@@ -2,7 +2,8 @@ from fastapi import APIRouter, Depends, Response
 from sqlalchemy.ext.asyncio import AsyncSession
 from typing import Any
 
-from database import schema, response_schemas
+from database import response_schemas
+from database import schema
 from repository.project_repository import (create_project,
                                            update_project,
                                            delete_project,

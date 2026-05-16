@@ -5,7 +5,8 @@ from sqlalchemy.exc import IntegrityError
 
 from typing import List, Optional, Any, Type
 
-from database import models, schema
+from database import models
+from database import schema
 from helpers import exception_helper
 from services.validation_services import ValidationService
 

@@ -3,7 +3,8 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from typing import Dict, Any
 
 from DAO.user_dao import UserDAO
-from database import response_schemas, schema
+from database import response_schemas
+from database import schema
 from helpers import password_helper
 from helpers.exception_helper import CheckHTTP403FORBIDDEN_BOOL, CheckHTTP404NotFound
 from helpers.jwt_helper import create_access_token

@@ -11,7 +11,7 @@ import json
 import time
 import httpx
 
-import config
+import config as config
 from database import response_schemas
 from helpers.jwt_helper import create_access_token
 from services.user_services import UserService
@@ -161,7 +161,7 @@ class GithubAuth:
             user = await UserDAO.create_user_with_github(db=db, 
                                                          github_id=github_user["id"], 
                                                          user_data=github_user,
-                                                         github_access_token=github_access_token)
+                                                         access_token=github_access_token)
         else:
             print(f"Existing user: {user.name} (ID: {user.id})")
             user.github_access_token = github_access_token

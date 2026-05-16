@@ -3,9 +3,10 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from typing import Dict, Any, List
 
 from DAO.user_dao import UserDAO
+from database import models, response_schemas
 from context.request_context import RequestContext, get_request_context
 from database.database import get_db
-from database import schema, models, response_schemas
+from database import schema
 from helpers import exception_helper
 
 from helpers.token_helper import get_token

@@ -2,7 +2,8 @@ from fastapi import Depends
 from dataclasses import dataclass
 
 from sqlalchemy.ext.asyncio import AsyncSession
-from database import models, schema, response_schemas
+from database import models, response_schemas
+from database import schema
 from database.database import get_db
 from repository.user_repository import get_current_user
 
