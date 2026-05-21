@@ -6,6 +6,7 @@ from starlette import status
 from starlette.responses import Response
 
 from DAO.item_dao import ItemDao
+from DAO.project_dao import ProjectDAO
 from database.database import get_db
 from database import models, response_schemas
 from database import schema
@@ -137,6 +138,27 @@ async def get_current_user(db: AsyncSession = Depends(get_db),
     return user
 
 
+
+async def get_all_users(db: AsyncSession) -> response_schemas.UserListResponse:
+    """
+    Retrieve all users from the system with their items.
+    
+    :param db: Database session
+    :return: List of all users with their items
+    :raises HTTPException: 404 if no users found
+    """
+    users = await GeneralDAO.get_all_records(db=db, model=models.User)
+    await exception_helper.CheckHTTP404NotFound(founding_item=users, text="Users not found")
+
+    users_list = await UserDAO.get_all_users(db=db)
+    
+    return response_schemas.UserListResponse(
+        message="Users retrieved successfully",
+        status_code=200,
+        data=users_list
+    )
+
+
 async def update_me(user_id: int,
                     user_data: schema.UserUpdate,
                     current_user: schema.User,
@@ -177,76 +199,4 @@ async def update_me(user_id: int,
         message="User has been updated",
         status_code=200,
         data = user_data
-    )
-
-async def get_current_user_items(current_user: schema.User, 
-                                 db: AsyncSession = Depends(get_db)) -> response_schemas.UserWithItemsDataResponse:
-    """
-    Get all items belonging to the current authenticated user.
-    
-    :param current_user: Authenticated user
-    :param db: Database session
-
-    :return: User's items
-    :raises HTTPException: 404 if no items found
-    """
-    items = await ItemDao.get_items_by_user_id(db=db, user_id=current_user.id)
-    await CheckHTTP404NotFound(items, "No items found for this user")
-
-    # Use Response Schema to avoid recursion
-    user_data = await UserDAO.get_user_with_items(user_id=current_user.id, db=db)
-
-    # Create response data using UserWithItemsResponse schema to avoid recursion
-    return response_schemas.UserWithItemsDataResponse(
-        message="User items retrieved successfully",
-        status_code=200,
-        data=user_data
-    )
-
-async def get_current_user_item(item_id: int,
-                                current_user: schema.User,
-                                db: AsyncSession = Depends(get_db)) -> response_schemas.ItemDetailResponse:
-    """
-    Get specific item belonging to the current user.
-    
-    :param item_id: ID of item to retrieve
-    :param current_user: Authenticated user
-    :param db: Database session
-
-    :return: User's specific item
-    :raises HTTPException: 404 if item not found or doesn't belong to user
-    """
-    
-    item = await ItemDao.get_item_by_user_id(db=db, 
-                                             user_id=current_user.id, 
-                                             item_id=item_id)
-    await CheckHTTP404NotFound(founding_item=item, text="Item not found")
-
-    # Create response data using ItemDetailResponse schema to avoid recursion
-    item_data = await ItemService.create_items_detail_response(item=item)
-
-    return response_schemas.ItemDetailResponse(
-        message="Item retrieved successfully",
-        status_code=200,
-        data=item_data
-        )
-
-
-async def get_all_users(db: AsyncSession) -> response_schemas.UserListResponse:
-    """
-    Retrieve all users from the system with their items.
-    
-    :param db: Database session
-    :return: List of all users with their items
-    :raises HTTPException: 404 if no users found
-    """
-    users = await GeneralDAO.get_all_records(db=db, model=models.User)
-    await exception_helper.CheckHTTP404NotFound(founding_item=users, text="Users not found")
-
-    users_list = await UserDAO.get_all_users(db=db)
-    
-    return response_schemas.UserListResponse(
-        message="Users retrieved successfully",
-        status_code=200,
-        data=users_list
     )

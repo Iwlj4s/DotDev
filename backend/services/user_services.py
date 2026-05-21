@@ -58,31 +58,6 @@ class UserService:
     )
     
     @staticmethod
-    async def create_user_with_items_response(user: models.User) -> response_schemas.UserWithItemsResponse:
-        """
-        Create UserWithItemsResponse from SQLAlchemy User model with related items.
-
-        :param user: models.User - User database model with related items
-
-        :return: response_schemas.UserWithItemsResponse - Formatted user with items for API response
-        """
-        user_data = await UserService.create_user_response(user=user)
-        items = [
-             response_schemas.ItemResponse(
-                id=item.id,
-                name=item.name,
-                description=item.description,
-                user_id=item.user_id
-            )
-            for item in user.items
-        ]
-
-        return response_schemas.UserWithItemsResponse( 
-            **user_data.dict(),  # Transform to dict cause UserWithItemsResponse wait named args for fields 
-            items=items
-        )
-    
-    @staticmethod
     async def create_current_user_response(user: models.User, token: str) -> response_schemas.CurrentUserResponse:
         """
         Create CurrentUserResponse from SQLAlchemy User model and JWT token.
@@ -100,11 +75,11 @@ class UserService:
         )
     
     @staticmethod
-    async def create_user_with_projects_response(user: models.User) -> response_schemas.UserWithItemsResponse:
+    async def create_user_with_projects_response(user: models.User) -> response_schemas.UserWithProjectsResponse:
         """
-        Create UserWithProjectsResponse from SQLAlchemy User model with related items.
+        Create UserWithProjectsResponse from SQLAlchemy User model with related projects.
 
-        :param user: models.User - User database model with related items
+        :param user: models.User - User database model with related projects
 
         :return: response_schemas.UserWithProjectsResponse - Formatted user with projects for API response
         """
@@ -117,8 +92,8 @@ class UserService:
                 owner_name=project.owner_name,
                 description=project.description,
                 full_readme=project.full_readme,
-                repo_created_at=project.repo_created_at,
-                repo_updated_at=project.repo_updated_at,
+                repo_created_at=project.repo_created_at.isoformat() if project.repo_created_at else None,
+                repo_updated_at=project.repo_updated_at.isoformat() if project.repo_updated_at else None,
                 github_data=project.github_data,
                 user_id=project.user_id
             )

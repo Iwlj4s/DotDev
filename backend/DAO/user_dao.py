@@ -86,6 +86,24 @@ class UserDAO:
         return user_with_items
     
     @classmethod
+    async def get_user_with_projects(cls, 
+                                  user_id: int,
+                                  db: AsyncSession) -> response_schemas.UserWithProjectsResponse:
+        """
+            Find user with projects by user's ID.
+            
+            :param db: Database session
+            :param user_id: User ID to find
+            :return: User data
+        """
+        user = await cls.get_user_by_id(user_id=user_id, db=db)
+        await exception_helper.CheckHTTP404NotFound(founding_item=user, text="User not found")
+        
+        user_with_projects = await UserService.create_user_with_projects_response(user=user)
+
+        return user_with_projects
+    
+    @classmethod
     async def get_all_users(cls,
                             db: AsyncSession) -> response_schemas.UserResponse:
         """

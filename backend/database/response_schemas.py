@@ -191,6 +191,10 @@ class UserWithItemsResponse(UserResponse):
 
     items: List[ItemResponse] = []
 
+class UserWithProjectsResponse(UserResponse):
+    """Schema for user with projects (flattened structure)"""
+    projects: List[ProjectResponse] = []
+
 
 class ItemWithUserResponse(ItemResponse):
     """
@@ -229,6 +233,8 @@ UserLoginResponse = DataResponse[CurrentUserResponse]
 
 UserWithItemsDataResponse = DataResponse[UserWithItemsResponse]
 """Response type for user retrieval with items"""
+
+UserWithProjectsDataResponse = DataResponse[UserWithProjectsResponse]
 
 # Items
 ItemCreateResponse = DataResponse[ItemResponse]
